@@ -1,15 +1,22 @@
 FROM python:3.9-slim
 
-WORKDIR /app
-COPY . .
+# 1. Install minimal build dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install without TgCrypto (slower but works)
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir \
-    pyrogram==2.0.106 \
-    pytgcalls==3.0.0.dev24 \
-    yt-dlp==2023.3.4 \
-    python-dotenv==0.19.0 \
-    ffmpeg-python==0.2.0
+WORKDIR /app
+
+# 2. Copy requirements first for layer caching
+COPY requirements.txt .
+
+# 3. Install with explicit wheel support
+RUN pip install --no-cache-dir --upgrade pip wheel && \
+    pip install --no-cache-dir --only-binary :all: TgCrypto && \
+    pip install --no-cache-dir -r requirements.txt
+
+# 4. Copy application files
+COPY . .
 
 CMD ["python", "bot.py"]
