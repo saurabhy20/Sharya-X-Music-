@@ -1,13 +1,9 @@
-FROM python:3.9
+FROM python:3.9  # Full image includes gcc and build tools
 
 WORKDIR /app
 
-RUN apt-get update && \
-    apt-get install -y ffmpeg && \
-    rm -rf /var/lib/apt/lists/*
-
 COPY repo /app
 
-RUN pip install --no-cache-dir -r requirements.txt
-
-CMD ["python", "main.py"]
+RUN if [ -f "/app/requirements.txt" ]; then \
+    pip install --no-cache-dir -r /app/requirements.txt; \
+    fi
